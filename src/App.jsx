@@ -1,21 +1,36 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 function App() {
   const [messages, setMessages] = useState([
-    { id: 1, sender: "System", text: "Welcome to the Mesh Chat decentralized node network.", time: "11:25 AM", isEncrypted: false },
-    { id: 2, sender: "User_Node_1", text: "Connection secure. All packets are passing through standard local protocols.", time: "11:26 AM", isEncrypted: false }
+    { id: 1, sender: "System", text: "⚡ SECURE MESH OVERLAY INITIALIZED", time: "11:25 AM", isEncrypted: false },
+    { id: 2, sender: "User_Node_1", text: "System link online. Ready to swap data codes. 🛸", time: "11:26 AM", isEncrypted: false }
   ]);
   const [inputText, setInputText] = useState("");
-  const [secretKey, setSecretKey] = useState("3"); // Default shifting key
+  const [secretKey, setSecretKey] = useState("3");
   const [useEncryption, setUseEncryption] = useState(false);
 
-  // Simple Caesar Cipher Implementation for demonstration
+  const messagesEndRef = useRef(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  // Cyber Punk Custom Grid Avatars
+  const getAvatarUrl = (sender) => {
+    if (sender === "You") return "https://api.dicebear.com/7.x/bottts/svg?seed=YouNode";
+    if (sender === "System") return "https://api.dicebear.com/7.x/bottts/svg?seed=Mainframe";
+    return "https://api.dicebear.com/7.x/bottts/svg?seed=GhostNode";
+  };
+
   const encryptText = (text, shift) => {
     return text
       .split('')
       .map(char => {
         const code = char.charCodeAt(0);
-        // Simple shift transformation for all printable ASCII characters
         if (code >= 32 && code <= 126) {
           return String.fromCharCode(((code - 32 + parseInt(shift)) % 95) + 32);
         }
@@ -60,13 +75,12 @@ function App() {
     setMessages(updatedMessages);
     setInputText("");
 
-    // Automated Secure Reply Logic
     setTimeout(() => {
-      let replyText = "Data packet acknowledged. Security check passed! 🔐";
+      let replyText = "Data transmission logs clear. Node link standing by... ⚡";
       if (useEncryption) {
-        replyText = encryptText(`Decrypted successfully using Key [${secretKey}]! Safe transmission confirmed. ✅`, secretKey);
+        replyText = encryptText(`Decryption complete! Symmetric shift matched at [Key: ${secretKey}]. Connection stable. 🛡️`, secretKey);
       } else {
-        replyText = "Warning: Transmitting in plaintext data format. Switch on encryption for safe routing! ⚠️";
+        replyText = "💥 ACCESS ALERT: Unsecured packet broadcast! Toggle upper quantum cipher shield immediately.";
       }
 
       const peerMsg = {
@@ -83,124 +97,139 @@ function App() {
   };
 
   return (
-    <div className="flex h-screen bg-[#0f172a] text-slate-100 font-sans overflow-hidden">
+    <div className="flex h-screen bg-[#060814] text-[#00ffcc] font-mono overflow-hidden antialiased selection:bg-cyan-500 selection:text-black">
       
-      {/* 1. LEFT SIDEBAR */}
-      <div className="w-64 bg-[#1e293b] border-r border-slate-700/50 flex flex-col hidden md:flex">
-        <div className="p-4 border-b border-slate-700/50 flex items-center justify-between">
-          <h1 className="text-xl font-bold text-cyan-400 tracking-wide">🔗 Mesh Network</h1>
-          <span className="w-3 h-3 bg-emerald-500 rounded-full animate-pulse"></span>
+      {/* 1. LEFT SIDEBAR: Cyber Terminal Deck */}
+      <div className="w-80 bg-[#0b0f19] border-r-2 border-[#00ffcc]/20 flex flex-col hidden md:flex shadow-[5px_0_15px_rgba(0,255,204,0.05)]">
+        <div className="p-6 pt-8 pb-4 border-b border-[#00ffcc]/10">
+          <h1 className="text-xl font-black tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-[#00ffcc] to-purple-500 animate-pulse">
+            ⚡ NEON_MESH.lnk
+          </h1>
+          <div className="text-[10px] text-purple-400 mt-1 uppercase font-semibold">Protocol Level v4.0.9</div>
         </div>
-        <div className="p-4 flex-1 space-y-4">
-          <div>
-            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Security Status</p>
-            <div className={`p-3 rounded-lg border text-sm space-y-2 ${useEncryption ? 'bg-emerald-950/20 border-emerald-500/30' : 'bg-amber-950/20 border-amber-500/30'}`}>
-              <div className="flex items-center gap-2">
-                <div className={`w-2 h-2 rounded-full ${useEncryption ? 'bg-emerald-400' : 'bg-amber-400'}`}></div>
-                <span className="font-medium text-xs uppercase">{useEncryption ? 'Cipher Active' : 'Plaintext Mode'}</span>
-              </div>
-              <p className="text-[11px] text-slate-400">
-                {useEncryption ? 'Packets are obfuscated using a local symmetric key cipher.' : 'Traffic vulnerable to packet capture.'}
-              </p>
+        
+        {/* Connection Nodes */}
+        <div className="flex-1 px-4 py-4 space-y-2">
+          <p className="px-2 text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Connected Feeds</p>
+          <div className="flex items-center gap-4 p-3.5 bg-[#0e1424] rounded-lg border border-[#00ffcc]/30 shadow-[0_0_10px_rgba(0,255,204,0.1)] cursor-pointer">
+            <div className="relative">
+              <img src={getAvatarUrl("User_Node_1")} className="w-10 h-10 bg-[#060814] rounded-lg border border-[#00ffcc]/50 p-1" alt="avatar" />
+              <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-[#00ffcc] rounded-full border-2 border-[#0b0f19] animate-ping"></div>
+              <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-[#00ffcc] rounded-full border-2 border-[#0b0f19]"></div>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-bold text-white tracking-wide">ghost_node_01</p>
+              <p className="text-[11px] text-[#00ffcc]/70">P2P Signal Level: 98%</p>
             </div>
           </div>
         </div>
-        <div className="p-4 bg-slate-900/40 border-t border-slate-700/50 text-xs text-slate-400">
-          Local Node: <code className="text-cyan-300">127.0.0.1:5173</code>
+
+        <div className="p-4 bg-[#060814] border-t border-[#00ffcc]/10 text-[10px] text-slate-500 text-center">
+          CORE HOPS: <span className="text-purple-400 font-bold">127.0.0.1 // DEV_STAGE</span>
         </div>
       </div>
 
-      {/* 2. MAIN CHAT AREA */}
-      <div className="flex-1 flex flex-col h-full bg-[#0f172a]">
+      {/* 2. CHAT STREAM BOARD */}
+      <div className="flex-1 flex flex-col h-full bg-[#060814]">
         
-        {/* Header */}
-        <div className="p-4 bg-[#1e293b]/60 backdrop-blur-md border-b border-slate-700/50">
-          <h2 className="font-semibold text-lg"># secure-mesh-broadcast</h2>
-          <p className="text-xs text-slate-400">Cryptographic Symmetric-Key Interface</p>
+        {/* Terminal Header Bar */}
+        <div className="p-4 bg-[#0b0f19] border-b-2 border-[#00ffcc]/20 flex items-center justify-between shadow-[0_4px_15px_rgba(0,0,0,0.5)]">
+          <div className="flex items-center gap-3">
+            <img src={getAvatarUrl("User_Node_1")} className="w-8 logic-avatar h-8 bg-black border border-purple-500 rounded p-0.5" alt="avatar" />
+            <div>
+              <h2 className="font-bold text-sm tracking-wider text-white">📡 BROADCAST_FEED // global</h2>
+              <p className="text-[10px] text-purple-400">Quantum Matrix Security Mode</p>
+            </div>
+          </div>
         </div>
 
-        {/* Message Stream */}
-        <div className="flex-1 p-4 overflow-y-auto space-y-4">
+        {/* Dynamic Glowing Bubbles */}
+        <div className="flex-1 p-6 overflow-y-auto space-y-6 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#0b0f19]/40 via-[#060814] to-[#060814]">
           {messages.map((msg) => (
-            <div key={msg.id} className={`flex flex-col ${msg.sender === 'You' ? 'items-end' : 'items-start'}`}>
-              <div className="flex items-center gap-2 mb-1">
-                <span className={`text-xs font-semibold ${msg.sender === 'You' ? 'text-cyan-400' : 'text-purple-400'}`}>
-                  {msg.sender}
-                </span>
-                <span className="text-[10px] text-slate-500">{msg.time}</span>
-                {msg.isEncrypted && (
-                  <span className="text-[9px] bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 px-1.5 py-0.5 rounded">
-                    🔑 Encrypted (Key: {msg.cipherKey})
-                  </span>
-                )}
-              </div>
-              <div className={`p-3 rounded-2xl max-w-md text-sm shadow-md border ${
-                msg.sender === 'You' 
-                  ? 'bg-cyan-600 text-white border-cyan-500 rounded-tr-none' 
-                  : 'bg-[#1e293b] text-slate-200 border-slate-700 rounded-tl-none'
-              }`}>
-                <p className="font-mono break-all">{msg.text}</p>
-                
-                {/* Real-time Inline Decryption Utility for the UI */}
-                {msg.isEncrypted && (
-                  <div className="mt-2 pt-2 border-t border-white/10 text-xs text-slate-300 italic">
-                    🔓 Decrypted payload: {decryptText(msg.text, msg.cipherKey)}
-                  </div>
-                )}
+            <div key={msg.id} className={`flex gap-3 items-start ${msg.sender === 'You' ? 'flex-row-reverse' : 'flex-row'}`}>
+              
+              <img src={getAvatarUrl(msg.sender)} className={`w-8 h-8 rounded border p-0.5 ${
+                msg.sender === 'You' ? 'border-[#00ffcc] bg-cyan-950/30' : 'border-purple-500 bg-purple-950/30'
+              }`} alt="peer" />
+
+              <div className="flex flex-col max-w-[75%]">
+                {/* Username Header badge */}
+                <div className={`flex items-center gap-2 mb-1 text-[11px] ${msg.sender === 'You' ? 'justify-end text-[#00ffcc]' : 'text-purple-400'}`}>
+                  <span className="font-bold uppercase tracking-wider">{msg.sender}</span>
+                  <span className="text-[9px] text-slate-500 font-mono">{msg.time}</span>
+                </div>
+
+                {/* Cyber glass bubble */}
+                <div className={`p-4 rounded-xl border font-mono text-sm leading-relaxed ${
+                  msg.sender === 'You' 
+                    ? 'bg-cyan-950/10 border-[#00ffcc] text-white shadow-[0_0_15px_rgba(0,255,204,0.15)]' 
+                    : 'bg-purple-950/10 border-purple-500 text-slate-100 shadow-[0_0_15px_rgba(147,51,234,0.15)]'
+                }`}>
+                  <p className="break-all whitespace-pre-wrap tracking-wide">{msg.text}</p>
+                  
+                  {msg.isEncrypted && (
+                    <div className="mt-3 pt-2 border-t border-[#00ffcc]/20 text-[11px] text-[#00ffcc] animate-pulse">
+                      ⚡ DECRYPTED RAW_HEX: {decryptText(msg.text, msg.cipherKey)}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           ))}
+          <div ref={messagesEndRef} />
         </div>
 
-        {/* 3. INPUT BAR WITH CRYPTO MODULE */}
-        <form onSubmit={handleSend} className="p-4 bg-[#1e293b]/40 border-t border-slate-700/50 space-y-3">
-          
-          {/* Encryption Control Panel */}
-          <div className="flex flex-wrap items-center gap-4 bg-slate-900/60 p-2 rounded-xl border border-slate-700/60 max-w-4xl mx-auto text-xs">
-            <label className="flex items-center gap-2 cursor-pointer select-none">
-              <input 
-                type="checkbox" 
-                checked={useEncryption} 
-                onChange={(e) => setUseEncryption(e.target.checked)}
-                className="accent-cyan-400"
-              />
-              <span className={`font-semibold ${useEncryption ? 'text-emerald-400' : 'text-slate-400'}`}>
-                Activate Cipher Modules
-              </span>
-            </label>
+        {/* 3. SCI-FI DASHBOARD INPUT CONTROL */}
+        <form onSubmit={handleSend} className="p-4 bg-[#0b0f19] border-t-2 border-[#00ffcc]/20">
+          <div className="max-w-4xl mx-auto space-y-3">
             
-            {useEncryption && (
-              <div className="flex items-center gap-2 animate-fadeIn">
-                <span className="text-slate-400">Symmetric Shift Key:</span>
+            {/* Cyber Shield Switcher */}
+            <div className="flex items-center justify-between bg-black border border-[#00ffcc]/20 px-4 py-2 rounded-lg text-[11px]">
+              <label className="flex items-center gap-2.5 cursor-pointer select-none text-slate-400 font-bold tracking-widest">
                 <input 
-                  type="number" 
-                  min="1" 
-                  max="25" 
-                  value={secretKey}
-                  onChange={(e) => setSecretKey(e.value || e.target.value)}
-                  className="w-12 bg-slate-800 border border-slate-600 rounded px-1.5 py-0.5 text-center text-cyan-300 outline-none focus:border-cyan-400"
+                  type="checkbox" 
+                  checked={useEncryption} 
+                  onChange={(e) => setUseEncryption(e.target.checked)}
+                  className="accent-[#00ffcc]"
                 />
-              </div>
-            )}
-          </div>
+                <span className={useEncryption ? 'text-[#00ffcc] drop-shadow-[0_0_5px_rgba(0,255,204,0.5)]' : 'text-slate-500'}>
+                  {useEncryption ? '⚡ QUANTUM CIPHER LOADED' : '🔓 OPEN WIRELESS TRANS'}
+                </span>
+              </label>
+              
+              {useEncryption && (
+                <div className="flex items-center gap-2 text-slate-400">
+                  <span className="uppercase text-[10px]">Shift Index:</span>
+                  <input 
+                    type="number" 
+                    min="1" 
+                    max="25" 
+                    value={secretKey}
+                    onChange={(e) => setSecretKey(e.target.value)}
+                    className="w-12 bg-[#121824] border border-[#00ffcc]/40 rounded text-center text-[#00ffcc] font-bold outline-none shadow-[0_0_5px_rgba(0,255,204,0.3)]"
+                  />
+                </div>
+              )}
+            </div>
 
-          {/* Text Input Box */}
-          <div className="flex gap-2 max-w-4xl mx-auto bg-[#1e293b] rounded-xl border border-slate-700 p-1 focus-within:border-cyan-500 transition-all">
-            <input 
-              type="text" 
-              value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
-              placeholder={useEncryption ? "Enter raw data to encrypt and stream..." : "Enter unencrypted message packet..."}
-              className="flex-1 bg-transparent px-3 py-2 text-sm outline-none placeholder-slate-500"
-            />
-            <button 
-              type="submit"
-              className={`text-slate-900 font-semibold text-sm px-4 py-2 rounded-lg transition-colors ${
-                useEncryption ? 'bg-emerald-400 hover:bg-emerald-500' : 'bg-cyan-500 hover:bg-cyan-600'
-              }`}
-            >
-              {useEncryption ? 'Send Ciphertext' : 'Send Packet'}
-            </button>
+            {/* Input console bar */}
+            <div className="flex items-center bg-[#060814] border border-[#00ffcc]/30 rounded-lg px-4 py-1.5 focus-within:border-[#00ffcc] focus-within:shadow-[0_0_10px_rgba(0,255,204,0.2)] transition-all">
+              <span className="text-[#00ffcc]/50 mr-2 text-sm font-bold">&gt;_</span>
+              <input 
+                type="text" 
+                value={inputText}
+                onChange={(e) => setInputText(e.target.value)}
+                placeholder={useEncryption ? "Input plaintext to modulate..." : "Broadcast standard packet data link..."}
+                className="flex-1 bg-transparent py-1.5 text-sm outline-none placeholder-slate-600 text-white font-mono"
+              />
+              <button 
+                type="submit"
+                className="text-[#00ffcc] hover:text-white font-black text-xs uppercase tracking-widest px-3 py-1 transition-all"
+              >
+                [Execute]
+              </button>
+            </div>
+
           </div>
         </form>
 
