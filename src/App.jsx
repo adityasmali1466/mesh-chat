@@ -43,12 +43,10 @@ function App() {
       });
     };
 
-    // Ping network immediately and setup an interval to discover new nodes
     broadcastPresence();
     const interval = setInterval(broadcastPresence, 3000);
     return () => clearInterval(interval);
   }, [bc, myNodeId, myPublicKey]);
-
 
   // BACKGROUND MESH DATA WIRELESS LISTENER
   useEffect(() => {
@@ -92,7 +90,7 @@ function App() {
         if (snifferActive) {
           setStolenPackets((prev) => [{
             time: incomingData.time,
-            interceptedData: incomingData.text, // What the spy steals out of the air
+            interceptedData: incomingData.text, 
             danger: !incomingData.isEncrypted,
             decryptedLeak: incomingData.isEncrypted ? "FAIL: DATA IS CRYPTO-LOCKED 🔒" : `LEAK DETECTED: "${textToShow}" 🔓`
           }, ...prev]);
@@ -119,16 +117,13 @@ function App() {
     e.preventDefault();
     if (!inputText.trim()) return;
 
-    // Find if a peer node's public lock exists on our local network map automatically
-    const discoveryKeys = Object.keys(peerPublicKeys);
-    const activePeerToken = discoveryKeys[0] || null;
+    // TARGET ACTIVE PEER ONLY: Filter out any historic ghost node tokens
+    const activePeerToken = Object.keys(peerPublicKeys).find(id => id !== myNodeId) || null;
     const peerLock = activePeerToken ? peerPublicKeys[activePeerToken] : null;
 
     let finalPayload = inputText;
     let systematicallySecured = false;
 
-    // AUTOMATED SELECTION: If a peer public lock was grabbed out of the air,
-    // automatically encrypt the message for them hands-free!
     if (peerLock) {
       finalPayload = encryptAutomatedText(inputText, peerLock);
       systematicallySecured = true;
@@ -147,7 +142,7 @@ function App() {
     const newMsg = {
       id: Date.now(),
       sender: "You",
-      text: inputText, // You always see your own clean text smoothly
+      text: inputText, 
       time: userMsgTime,
       isEncrypted: systematicallySecured,
       rawText: inputText 
@@ -159,7 +154,7 @@ function App() {
     bc.postMessage({
       type: "MESSAGE",
       senderToken: myNodeId,
-      text: finalPayload, // Scrambled payload passes across intermediate devices
+      text: finalPayload, 
       time: userMsgTime,
       isEncrypted: systematicallySecured,
       rawText: inputText
@@ -191,12 +186,14 @@ function App() {
 
           <div className="p-3 bg-black/20 border border-slate-900 rounded-lg space-y-1 text-[11px]">
             <p className="text-slate-400 font-bold uppercase tracking-wider">// Discovered Peers Public Locks:</p>
-            {Object.keys(peerPublicKeys).length === 0 ? (
+            {Object.keys(peerPublicKeys).filter(id => id !== myNodeId).length === 0 ? (
               <p className="text-slate-600 italic animate-pulse">Scanning grid for sibling locks...</p>
             ) : (
-              Object.entries(peerPublicKeys).map(([peerId, peerLock]) => (
-                <div key={peerId} className="text-cyan-400">📡 <span className="text-slate-400">{peerId}:</span> LockValue [{peerLock}]</div>
-              ))
+              Object.entries(peerPublicKeys)
+                .filter(([peerId]) => peerId !== myNodeId)
+                .map(([peerId, peerLock]) => (
+                  <div key={peerId} className="text-cyan-400">📡 <span className="text-slate-400">{peerId}:</span> LockValue [{peerLock}]</div>
+                ))
             )}
           </div>
 
