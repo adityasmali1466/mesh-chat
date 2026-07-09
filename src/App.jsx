@@ -1,14 +1,19 @@
 import React, { useState, useEffect, useRef } from 'react';
 
 function App() {
-  const [messages, setMessages] = useState([
-    { id: 1, sender: "System", text: "⚡ SECURE MESH OVERLAY INITIALIZED", time: "11:25 AM", isEncrypted: false },
-    { id: 2, sender: "User_Node_1", text: "System link online. Automated key exchange active. 🛸", time: "11:26 AM", isEncrypted: false }
-  ]);
+  // TASK 1 IMPLEMENTATION: Initialize messages from localStorage if they exist, otherwise use default setup
+  const [messages, setMessages] = useState(() => {
+    const savedChats = localStorage.getItem("mesh_chat_history");
+    return savedChats ? JSON.parse(savedChats) : [
+      { id: 1, sender: "System", text: "⚡ SECURE MESH OVERLAY INITIALIZED", time: "11:25 AM", isEncrypted: false },
+      { id: 2, sender: "User_Node_1", text: "System link online. Automated key exchange active. 🛸", time: "11:26 AM", isEncrypted: false }
+    ];
+  });
+
   const [inputText, setInputText] = useState("");
   const [isGlitching, setIsGlitching] = useState(false);
 
-  // 🤖 AUTOMATED KEYS (Generated hand-free when tab opens)
+  // 🤖 AUTOMATED KEYS (Generated hands-free when tab opens)
   const [myNodeId] = useState(() => "NODE_" + Math.random().toString(36).substring(2, 7).toUpperCase());
   const [myPrivateKey] = useState(() => Math.floor(Math.random() * 9) + 2); // Hidden local secret key
   const [myPublicKey] = useState(() => myPrivateKey * 7); // Public lock shared with everyone
@@ -29,7 +34,9 @@ function App() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
+  // TASK 1 IMPLEMENTATION: Monitor the messages state and save it to browser disk whenever it changes
   useEffect(() => {
+    localStorage.setItem("mesh_chat_history", JSON.stringify(messages));
     scrollToBottom();
   }, [messages]);
 
@@ -163,6 +170,14 @@ function App() {
     setInputText("");
   };
 
+  // TASK 1 IMPLEMENTATION: Add a helper button to allow clearing history manually
+  const clearChatHistory = () => {
+    localStorage.removeItem("mesh_chat_history");
+    setMessages([
+      { id: 1, sender: "System", text: "⚡ SECURE MESH OVERLAY INITIALIZED", time: "11:25 AM", isEncrypted: false }
+    ]);
+  };
+
   return (
     <div className="flex h-screen bg-[#060814] text-[#00ffcc] font-mono overflow-hidden antialiased">
       
@@ -198,8 +213,8 @@ function App() {
           </div>
 
           {/* ATTACK PANEL TRIGGER BUTTON */}
-          <div className="pt-2">
-            <p className="px-2 text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Lab Controls</p>
+          <div className="pt-2 space-y-2">
+            <p className="px-2 text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Lab Controls</p>
             <button 
               type="button"
               onClick={() => setSnifferActive(!snifferActive)}
@@ -210,6 +225,15 @@ function App() {
               }`}
             >
               {snifferActive ? '🛑 Shutdown Sniffer' : '🦹 Launch Packet Sniffer'}
+            </button>
+
+            {/* TASK 1 CONTROL BUTTON */}
+            <button 
+              type="button"
+              onClick={clearChatHistory}
+              className="w-full p-2.5 rounded-lg border border-purple-900/40 bg-purple-950/10 text-purple-400 text-xs font-bold tracking-wider hover:bg-purple-950/30 transition-all cursor-pointer uppercase"
+            >
+              🗑️ Clear Saved Local Database
             </button>
           </div>
         </div>
