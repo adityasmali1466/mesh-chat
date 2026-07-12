@@ -28,11 +28,10 @@ function App() {
     scrollToBottom();
   }, [messages]);
 
-  // INITIALIZE WEBRTC PEER LAYER WITH STUN SERVERS TO BYPASS FIREWALLS
+  // INITIALIZE WEBRTC PEER LAYER WITH FIREWALL BYPASS
   useEffect(() => {
     const cleanId = "NODE-" + Math.random().toString(36).substring(2, 6).toUpperCase();
     
-    // Configured with Google's free public STUN servers for network penetration
     const peer = new Peer(cleanId, {
       config: {
         iceServers: [
@@ -47,15 +46,11 @@ function App() {
       setMyPeerId(id);
     });
 
+    // LISTENER: Handle an incoming connection call from the other device
     peer.on('connection', (conn) => {
       activeConnection.current = conn;
       setConnectedPeerId(conn.peer);
       setupConnectionListeners(conn);
-    });
-
-    peer.on('error', (err) => {
-      console.error("PeerJS Core Error:", err.type);
-      alert(`Connection Alert: ${err.type}. Please double-check the Node ID.`);
     });
 
     peerInstance.current = peer;
@@ -67,6 +62,7 @@ function App() {
       if (data.type === "MESSAGE") {
         let decryptedText = data.text;
 
+        // Hardware AES Encryption Decryption Block
         if (data.isEncrypted && data.encryptedKeyMaterial) {
           try {
             const cryptoKey = await window.crypto.subtle.importKey(
@@ -102,6 +98,7 @@ function App() {
     });
   };
 
+  // OUTBOUND CALL: Connect to the other device node ID
   const connectToFriend = () => {
     if (!targetPeerId.trim() || !peerInstance.current) return;
     const formattedId = targetPeerId.trim().toUpperCase();
@@ -122,6 +119,7 @@ function App() {
     const uniqueMessageId = Date.now();
     const userMsgTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
+    // Generate unique hardware AES block key
     const aesKey = await window.crypto.subtle.generateKey(
       { name: "AES-GCM", length: 256 },
       true,
@@ -144,6 +142,7 @@ function App() {
 
     setMessages(prev => [...prev, { id: uniqueMessageId, sender: "You", text: inputText, time: userMsgTime, isEncrypted: true }]);
 
+    // Transmit across WebRTC stream channel
     activeConnection.current.send({
       type: "MESSAGE",
       id: uniqueMessageId,
@@ -189,7 +188,7 @@ function App() {
             </button>
           </div>
         ) : (
-          <div className="text-center text-[10px] font-bold text-emerald-400 bg-emerald-950/20 border border-emerald-500/30 py-1.5 rounded-lg">
+          <div className="text-center w-full text-[10px] font-bold text-emerald-400 bg-emerald-950/20 border border-emerald-500/30 py-1.5 rounded-lg">
             📡 SECURELY LINKED TO: {connectedPeerId}
           </div>
         )}
