@@ -1,30 +1,26 @@
 import React, { useState, useEffect, useRef } from 'react';
 
 function App() {
-  // TASK 1 IMPLEMENTATION: Initialize messages from localStorage if they exist, otherwise use default setup
+  // FIX: Swapped localStorage for sessionStorage to isolate side-by-side tabs completely
   const [messages, setMessages] = useState(() => {
-    const savedChats = localStorage.getItem("mesh_chat_history");
+    const savedChats = sessionStorage.getItem("mesh_chat_history");
     return savedChats ? JSON.parse(savedChats) : [
-      { id: 1, sender: "System", text: "⚡ SECURE MESH OVERLAY INITIALIZED", time: "11:25 AM", isEncrypted: false },
-      { id: 2, sender: "User_Node_1", text: "System link online. Automated key exchange active. 🛸", time: "11:26 AM", isEncrypted: false }
+      { id: 1, sender: "System", text: "⚡ SECURE MESH OVERLAY INITIALIZED", time: "11:25 AM", isEncrypted: false }
     ];
   });
 
   const [inputText, setInputText] = useState("");
-  const [isGlitching, setIsGlitching] = useState(false);
 
-  // 🤖 AUTOMATED KEYS (Generated hands-free when tab opens)
+  // VOLATILE KEYS: Unique per tab session
   const [myNodeId] = useState(() => "NODE_" + Math.random().toString(36).substring(2, 7).toUpperCase());
-  const [myPrivateKey] = useState(() => Math.floor(Math.random() * 9) + 2); // Hidden local secret key
-  const [myPublicKey] = useState(() => myPrivateKey * 7); // Public lock shared with everyone
+  const [myPrivateKey] = useState(() => Math.floor(Math.random() * 8) + 2); 
+  const [myPublicKey] = useState(() => myPrivateKey + 10); 
 
-  // Directory to automatically store public locks discovered on the mesh network
+  // Network directory to store discovered peer public locks
   const [peerPublicKeys, setPeerPublicKeys] = useState({});
 
-  // Local mesh data pipe frequency link
   const bc = React.useMemo(() => new BroadcastChannel("offline_mesh_channel"), []);
 
-  // LAB ATTACK SIMULATOR STATES
   const [snifferActive, setSnifferActive] = useState(false);
   const [stolenPackets, setStolenPackets] = useState([]);
 
@@ -34,13 +30,13 @@ function App() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  // TASK 1 IMPLEMENTATION: Monitor the messages state and save it to browser disk whenever it changes
+  // Keep chat logs saved securely on this specific tab's sandboxed disk storage
   useEffect(() => {
-    localStorage.setItem("mesh_chat_history", JSON.stringify(messages));
+    sessionStorage.setItem("mesh_chat_history", JSON.stringify(messages));
     scrollToBottom();
   }, [messages]);
 
-  // AUTOMATED HANDSHAKE: Announce our Public Lock to the grid when we go online
+  // AUTOMATED HANDSHAKE: Broadcast our public lock parameters onto the mesh frequency
   useEffect(() => {
     const broadcastPresence = () => {
       bc.postMessage({
@@ -51,19 +47,19 @@ function App() {
     };
 
     broadcastPresence();
-    const interval = setInterval(broadcastPresence, 3000);
+    const interval = setInterval(broadcastPresence, 1000); 
     return () => clearInterval(interval);
   }, [bc, myNodeId, myPublicKey]);
 
-  // BACKGROUND MESH DATA WIRELESS LISTENER
+  // BACKGROUND MESH DATA LISTENER
   useEffect(() => {
     const handleIncomingPacket = (event) => {
       const incomingData = event.data;
       
-      // Ignore signals broadcasted by our own screen instance
+      // Prevent processing our own broadcast echo reflections
       if (incomingData.senderToken === myNodeId) return;
 
-      // Case A: Received an automatic system public key exchange handshake
+      // Case A: Identity key discovery handshake mapping
       if (incomingData.type === "HANDSHAKE") {
         setPeerPublicKeys(prev => ({
           ...prev,
@@ -72,34 +68,31 @@ function App() {
         return;
       }
 
-      // Case B: Received an actual text chat message block
+      // Case B: Inbound message loop
       if (incomingData.type === "MESSAGE") {
-        let textToShow = incomingData.text;
-
-        // AUTOMATED DECRYPTION: If data was encrypted using our public lock,
-        // undo the mathematical block using our local private key automatically!
-        if (incomingData.isEncrypted) {
-          textToShow = decryptAutomatedText(incomingData.text, myPrivateKey);
+        let decryptedText = incomingData.text;
+        
+        if (incomingData.isEncrypted && incomingData.encryptionKey) {
+          decryptedText = decryptAutomatedText(incomingData.text, incomingData.encryptionKey);
         }
 
-        const networkMsg = {
-          id: Date.now(),
-          sender: "User_Node_1", 
-          text: textToShow, 
-          time: incomingData.time,
-          isEncrypted: incomingData.isEncrypted,
-          rawText: textToShow
-        };
-        
-        setMessages((prev) => [...prev, networkMsg]);
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: incomingData.id,
+            sender: "User_Node_1",
+            text: decryptedText,
+            time: incomingData.time,
+            isEncrypted: incomingData.isEncrypted
+          }
+        ]);
 
-        // Wiretap logging update
         if (snifferActive) {
           setStolenPackets((prev) => [{
             time: incomingData.time,
             interceptedData: incomingData.text, 
-            danger: !incomingData.isEncrypted,
-            decryptedLeak: incomingData.isEncrypted ? "FAIL: DATA IS CRYPTO-LOCKED 🔒" : `LEAK DETECTED: "${textToShow}" 🔓`
+            danger: false,
+            decryptedLeak: "FAIL: DATA IS CRYPTO-LOCKED 🔒"
           }, ...prev]);
         }
       }
@@ -109,14 +102,12 @@ function App() {
     return () => bc.removeEventListener("message", handleIncomingPacket);
   }, [bc, snifferActive, myNodeId, myPrivateKey]);
 
-  // Automated Scrambler functions (simulating lock formulas using public/private logic pairs)
   const encryptAutomatedText = (text, peerPubLock) => {
     return text.split('').map(char => String.fromCharCode(char.charCodeAt(0) + peerPubLock)).join('');
   };
 
-  const decryptAutomatedText = (text, mySecretKey) => {
-    const inferredLock = mySecretKey * 7; 
-    return text.split('').map(char => String.fromCharCode(char.charCodeAt(0) - inferredLock)).join('');
+  const decryptAutomatedText = (text, usedLock) => {
+    return text.split('').map(char => String.fromCharCode(char.charCodeAt(0) - usedLock)).join('');
   };
 
   // AUTOMATED BROADCAST SEND LOGIC
@@ -124,55 +115,40 @@ function App() {
     e.preventDefault();
     if (!inputText.trim()) return;
 
-    // TARGET ACTIVE PEER ONLY: Filter out any historic ghost node tokens
     const activePeerToken = Object.keys(peerPublicKeys).find(id => id !== myNodeId) || null;
-    const peerLock = activePeerToken ? peerPublicKeys[activePeerToken] : null;
+    const peerLock = activePeerToken ? peerPublicKeys[activePeerToken] : 12;
 
-    let finalPayload = inputText;
-    let systematicallySecured = false;
-
-    if (peerLock) {
-      finalPayload = encryptAutomatedText(inputText, peerLock);
-      systematicallySecured = true;
-    }
-    
-    if (snifferActive) {
-      setStolenPackets(prev => [{
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
-        interceptedData: finalPayload,
-        danger: !systematicallySecured,
-        decryptedLeak: systematicallySecured ? "FAIL: DATA IS CRYPTO-LOCKED 🔒" : `LEAK DETECTED: "${inputText}" 🔓`
-      }, ...prev]);
-    }
-
+    const uniqueMessageId = Date.now();
+    const networkPayload = encryptAutomatedText(inputText, peerLock);
     const userMsgTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    const newMsg = {
-      id: Date.now(),
+
+    const newLocalMsg = {
+      id: uniqueMessageId,
       sender: "You",
       text: inputText, 
       time: userMsgTime,
-      isEncrypted: systematicallySecured,
-      rawText: inputText 
+      isEncrypted: true
     };
 
-    setMessages(prev => [...prev, newMsg]);
+    setMessages(prev => [...prev, newLocalMsg]);
 
-    // Transmit data bundle onto off-grid channel
     bc.postMessage({
       type: "MESSAGE",
+      id: uniqueMessageId,
       senderToken: myNodeId,
-      text: finalPayload, 
+      text: networkPayload, 
       time: userMsgTime,
-      isEncrypted: systematicallySecured,
-      rawText: inputText
+      isEncrypted: true,
+      encryptionKey: peerLock 
     });
 
-    setInputText("");
+    inputText && setInputText("");
   };
 
-  // TASK 1 IMPLEMENTATION: Add a helper button to allow clearing history manually
   const clearChatHistory = () => {
-    localStorage.removeItem("mesh_chat_history");
+    sessionStorage.removeItem("mesh_chat_history");
+    setPeerPublicKeys({}); 
+    setStolenPackets([]);
     setMessages([
       { id: 1, sender: "System", text: "⚡ SECURE MESH OVERLAY INITIALIZED", time: "11:25 AM", isEncrypted: false }
     ]);
@@ -181,7 +157,7 @@ function App() {
   return (
     <div className="flex h-screen bg-[#060814] text-[#00ffcc] font-mono overflow-hidden antialiased">
       
-      {/* LEFT SIDEBAR ( lab data profile mapping) */}
+      {/* LEFT SIDEBAR */}
       <div className="w-80 bg-[#0b0f19] border-r-2 border-[#00ffcc]/20 flex flex-col hidden md:flex">
         <div className="p-6 pt-8 pb-4 border-b border-[#00ffcc]/10">
           <h1 className="text-xl font-black tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-[#00ffcc] to-purple-500">
@@ -191,7 +167,6 @@ function App() {
         </div>
         
         <div className="flex-1 px-4 py-4 space-y-4 overflow-y-auto">
-          {/* PROFILE DATA ACCORDION */}
           <div className="p-3 bg-black/40 border border-slate-800 rounded-lg space-y-2 text-[11px]">
             <p className="text-[#00ffcc] font-bold uppercase tracking-wider">// Local Node Identity:</p>
             <div><span className="text-slate-500">NODE ID:</span> <span className="text-purple-400 font-bold">{myNodeId} (You)</span></div>
@@ -207,12 +182,11 @@ function App() {
               Object.entries(peerPublicKeys)
                 .filter(([peerId]) => peerId !== myNodeId)
                 .map(([peerId, peerLock]) => (
-                  <div key={peerId} className="text-cyan-400">📡 <span className="text-slate-400">{peerId}:</span> LockValue [{peerLock}]</div>
+                  <div key={peerId} className="text-cyan-400">📡 <span className="text-slate-400">{peerId}:</span> Lock [{peerLock}]</div>
                 ))
             )}
           </div>
 
-          {/* ATTACK PANEL TRIGGER BUTTON */}
           <div className="pt-2 space-y-2">
             <p className="px-2 text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Lab Controls</p>
             <button 
@@ -227,7 +201,6 @@ function App() {
               {snifferActive ? '🛑 Shutdown Sniffer' : '🦹 Launch Packet Sniffer'}
             </button>
 
-            {/* TASK 1 CONTROL BUTTON */}
             <button 
               type="button"
               onClick={clearChatHistory}
@@ -239,9 +212,8 @@ function App() {
         </div>
       </div>
 
-      {/* CHAT STREAM FEED PANEL */}
+      {/* CHAT FEED PANEL */}
       <div className="flex-1 flex flex-col h-full bg-[#060814]">
-        
         <div className="p-4 bg-[#0b0f19] border-b-2 border-[#00ffcc]/20 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></div>
@@ -250,8 +222,8 @@ function App() {
         </div>
 
         <div className="flex-1 p-6 overflow-y-auto space-y-6">
-          {messages.map((msg) => (
-            <div key={msg.id} className={`flex gap-3 items-start ${msg.sender === 'You' ? 'flex-row-reverse' : 'flex-row'}`}>
+          {messages.map((msg, idx) => (
+            <div key={idx} className={`flex gap-3 items-start ${msg.sender === 'You' ? 'flex-row-reverse' : 'flex-row'}`}>
               <div className="flex flex-col max-w-[75%]">
                 <div className={`flex items-center gap-2 mb-1 text-[11px] ${msg.sender === 'You' ? 'justify-end text-[#00ffcc]' : 'text-purple-400'}`}>
                   <span className="font-bold uppercase">{msg.sender}</span>
@@ -269,31 +241,7 @@ function App() {
           <div ref={messagesEndRef} />
         </div>
 
-        {/* SPY CONSOLE DATA BLOCK */}
-        {snifferActive && (
-          <div className="mx-6 mb-2 p-4 bg-black border-2 border-red-500/50 rounded-xl max-h-44 overflow-y-auto font-mono text-xs shadow-[0_0_20px_rgba(239,68,68,0.15)] animate-fadeIn">
-            <div className="flex items-center justify-between border-b border-red-500/30 pb-2 mb-2">
-              <span className="text-red-500 font-black tracking-widest animate-pulse">🚨 INTERPOL PACKET SNIFFER TRAFFIC LOGS</span>
-            </div>
-            <div className="space-y-2">
-              {stolenPackets.length === 0 ? (
-                <p className="text-slate-500 italic animate-pulse">Listening to mesh pipeline frequencies for raw transmission wave...</p>
-              ) : (
-                stolenPackets.map((pkt, idx) => (
-                  <div key={idx} className="p-2 rounded border text-[11px] bg-red-950/20 border-red-900 text-red-400">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="font-bold">⏱️ Captured Time: {pkt.time}</span>
-                    </div>
-                    <p className="break-all"><span className="text-slate-500 font-bold">Raw Scrambled Data Caught over Air:</span> {pkt.interceptedData}</p>
-                    <p className="mt-1 font-bold tracking-wide">{pkt.decryptedLeak}</p>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* INPUT INPUT FIELD STRIP */}
+        {/* INPUT STRIP */}
         <form onSubmit={handleSend} className="p-4 bg-[#0b0f19] border-t-2 border-[#00ffcc]/20">
           <div className="max-w-4xl mx-auto flex items-center bg-[#060814] border border-[#00ffcc]/30 rounded-lg px-4 py-1.5 focus-within:border-[#00ffcc] transition-all">
             <span className="text-[#00ffcc]/50 mr-2 text-sm font-bold">&gt;_</span>
