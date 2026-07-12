@@ -28,7 +28,6 @@ function App() {
     scrollToBottom();
   }, [messages]);
 
-  // INITIALIZE WEBRTC PEER LAYER WITH FIREWALL BYPASS
   useEffect(() => {
     const cleanId = "NODE-" + Math.random().toString(36).substring(2, 6).toUpperCase();
     
@@ -37,7 +36,8 @@ function App() {
         iceServers: [
           { urls: 'stun:stun.l.google.com:19302' },
           { urls: 'stun:stun1.l.google.com:19302' },
-          { urls: 'stun:stun2.l.google.com:19302' }
+          { urls: 'stun:stun2.l.google.com:19302' },
+          { urls: 'stun:stun3.l.google.com:19302' }
         ]
       }
     });
@@ -46,8 +46,8 @@ function App() {
       setMyPeerId(id);
     });
 
-    // LISTENER: Handle an incoming connection call from the other device
     peer.on('connection', (conn) => {
+      if (activeConnection.current && activeConnection.current.peer === conn.peer) return;
       activeConnection.current = conn;
       setConnectedPeerId(conn.peer);
       setupConnectionListeners(conn);
@@ -62,7 +62,6 @@ function App() {
       if (data.type === "MESSAGE") {
         let decryptedText = data.text;
 
-        // Hardware AES Encryption Decryption Block
         if (data.isEncrypted && data.encryptedKeyMaterial) {
           try {
             const cryptoKey = await window.crypto.subtle.importKey(
@@ -96,9 +95,13 @@ function App() {
       setConnectedPeerId(null);
       activeConnection.current = null;
     });
+
+    conn.on('error', () => {
+      setConnectedPeerId(null);
+      activeConnection.current = null;
+    });
   };
 
-  // OUTBOUND CALL: Connect to the other device node ID
   const connectToFriend = () => {
     if (!targetPeerId.trim() || !peerInstance.current) return;
     const formattedId = targetPeerId.trim().toUpperCase();
@@ -119,7 +122,6 @@ function App() {
     const uniqueMessageId = Date.now();
     const userMsgTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-    // Generate unique hardware AES block key
     const aesKey = await window.crypto.subtle.generateKey(
       { name: "AES-GCM", length: 256 },
       true,
@@ -142,7 +144,6 @@ function App() {
 
     setMessages(prev => [...prev, { id: uniqueMessageId, sender: "You", text: inputText, time: userMsgTime, isEncrypted: true }]);
 
-    // Transmit across WebRTC stream channel
     activeConnection.current.send({
       type: "MESSAGE",
       id: uniqueMessageId,
@@ -176,7 +177,7 @@ function App() {
               type="text" 
               value={targetPeerId} 
               onChange={(e) => setTargetPeerId(e.target.value)} 
-              placeholder="ENTER FRIEND'S NODE ID" 
+              placeholder="ENTER TARGET NODE ID" 
               className="flex-1 bg-black border border-slate-700 rounded px-2 py-1 text-xs text-white uppercase outline-none focus:border-[#00ffcc]"
             />
             <button 
@@ -204,7 +205,7 @@ function App() {
         </div>
 
         <div className="p-3 bg-black/40 border border-slate-800 rounded-lg space-y-1 text-[11px]">
-          <div><span className="text-slate-500">YOUR PHONE ID:</span> <span className="text-purple-400 font-bold select-all">{myPeerId || "Generating..."}</span></div>
+          <div><span className="text-slate-500">YOUR NODE ID:</span> <span className="text-purple-400 font-bold select-all">{myPeerId || "Generating..."}</span></div>
           <div><span className="text-slate-500">LINK STATUS:</span> <span className={connectedPeerId ? "text-emerald-400 font-bold" : "text-red-400 animate-pulse"}>{connectedPeerId ? `CONNECTED TO ${connectedPeerId}` : "DISCONNECTED"}</span></div>
         </div>
 
@@ -215,7 +216,7 @@ function App() {
               type="text" 
               value={targetPeerId} 
               onChange={(e) => setTargetPeerId(e.target.value)} 
-              placeholder="Enter Friend's Node ID" 
+              placeholder="Enter Target Node ID" 
               className="w-full bg-black border border-slate-800 rounded px-2 py-1 text-xs text-white uppercase outline-none focus:border-[#00ffcc]"
             />
             <button 
