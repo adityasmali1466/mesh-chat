@@ -28,10 +28,20 @@ function App() {
     scrollToBottom();
   }, [messages]);
 
-  // INITIALIZE WEBRTC PEER LAYER
+  // INITIALIZE WEBRTC PEER LAYER WITH STUN SERVERS TO BYPASS FIREWALLS
   useEffect(() => {
     const cleanId = "NODE-" + Math.random().toString(36).substring(2, 6).toUpperCase();
-    const peer = new Peer(cleanId);
+    
+    // Configured with Google's free public STUN servers for network penetration
+    const peer = new Peer(cleanId, {
+      config: {
+        iceServers: [
+          { urls: 'stun:stun.l.google.com:19302' },
+          { urls: 'stun:stun1.l.google.com:19302' },
+          { urls: 'stun:stun2.l.google.com:19302' }
+        ]
+      }
+    });
 
     peer.on('open', (id) => {
       setMyPeerId(id);
@@ -41,6 +51,11 @@ function App() {
       activeConnection.current = conn;
       setConnectedPeerId(conn.peer);
       setupConnectionListeners(conn);
+    });
+
+    peer.on('error', (err) => {
+      console.error("PeerJS Core Error:", err.type);
+      alert(`Connection Alert: ${err.type}. Please double-check the Node ID.`);
     });
 
     peerInstance.current = peer;
@@ -89,10 +104,14 @@ function App() {
 
   const connectToFriend = () => {
     if (!targetPeerId.trim() || !peerInstance.current) return;
+    const formattedId = targetPeerId.trim().toUpperCase();
 
-    const conn = peerInstance.current.connect(targetPeerId.trim().toUpperCase());
+    const conn = peerInstance.current.connect(formattedId, {
+      reliable: true
+    });
+    
     activeConnection.current = conn;
-    setConnectedPeerId(targetPeerId.trim().toUpperCase());
+    setConnectedPeerId(formattedId);
     setupConnectionListeners(conn);
   };
 
@@ -103,7 +122,6 @@ function App() {
     const uniqueMessageId = Date.now();
     const userMsgTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-    // Hardware AES-GCM Engine Execution
     const aesKey = await window.crypto.subtle.generateKey(
       { name: "AES-GCM", length: 256 },
       true,
@@ -142,14 +160,14 @@ function App() {
   return (
     <div className="flex h-screen bg-[#060814] text-[#00ffcc] font-mono overflow-hidden antialiased flex-col md:flex-row">
       
-      {/* MOBILE CONNECTOR HEAD (Visible ONLY on mobile devices) */}
+      {/* MOBILE CONNECTOR HEAD */}
       <div className="md:hidden bg-[#0b0f19] border-b border-[#00ffcc]/20 p-4 space-y-3 shrink-0">
         <div className="flex justify-between items-center">
           <h1 className="text-sm font-black tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-[#00ffcc] to-purple-500">
             ⚡ LIVE_MESH.lnk
           </h1>
           <span className="text-[10px] text-purple-400 font-bold bg-purple-950/40 border border-purple-500/20 px-2 py-0.5 rounded">
-            ID: {myPeerId || "... Generating ID"}
+            ID: {myPeerId || "... Booting Node"}
           </span>
         </div>
         
@@ -177,7 +195,7 @@ function App() {
         )}
       </div>
 
-      {/* DESKTOP SIDEBAR (Hidden on mobile screens) */}
+      {/* DESKTOP SIDEBAR */}
       <div className="w-80 bg-[#0b0f19] border-r-2 border-[#00ffcc]/20 flex-col hidden md:flex p-6 space-y-4 shrink-0">
         <div>
           <h1 className="text-xl font-black tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-[#00ffcc] to-purple-500">
